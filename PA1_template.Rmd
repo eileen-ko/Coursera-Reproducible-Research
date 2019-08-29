@@ -1,10 +1,10 @@
 ---
-title: "Coursera Reproducible Research Assignment1"
+title: "Coursera reproducible research assignment 1"
 author: "Yiqun HUANG"
 date: "8/28/2019"
-output:
-  html_document: default
-  pdf_document: default
+output: 
+  html_document: 
+    keep_md: true
 ---
 
 ##Reproducible Research Assignment 1
