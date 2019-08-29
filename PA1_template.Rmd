@@ -1,0 +1,161 @@
+---
+title: "Coursera Reproducible Research Assignment1"
+author: "Yiqun HUANG"
+date: "8/28/2019"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+##Reproducible Research Assignment 1
+load the packages will be used
+```{r}
+library(ggplot2)
+library(knitr)
+library(dplyr)
+```
+
+load the data and take a look at the dataset
+```{r, echo=TRUE}
+data <- read.csv("~/Downloads/activity.csv")
+str(data)
+```
+
+##What is mean total number of steps taken per day?
+1. Calculate the total number of steps taken per day
+```{r, echo=TRUE}
+step <- tapply(data$steps, data$date, FUN = sum, na.rm = TRUE)
+step1 <- data.frame(as.numeric(step))
+```
+
+2. Plot the histogram
+```{r, echo=TRUE}
+ggplot(data = step1, aes(step1$as.numeric.step.))+
+    geom_histogram(color = "black", fill = "grey", binwidth = 5000)+
+    xlab("steps per day")+ylab("frequency")+
+    ggtitle("Histogram of the total number of steps taken each day")
+```
+
+3. Calculate and report the mean and median
+```{r, echo=TRUE}
+print(step_mean <- mean(step1$as.numeric.step.))
+print(step_media <- median(step1$as.numeric.step.))
+```
+
+##What is the average daily activity pattern?
+Calculate the average steps across all days
+```{r, echo=TRUE}
+step2 <- tapply(data$steps, data$interval, FUN = mean, na.rm = TRUE)
+step2 <- data.frame(step2)
+step2 <- step2[ ,c("step2")]
+intervals<-unique(data$interval)
+step_interval <-data.frame(cbind(step2,intervals))
+```
+
+1.Plot the daily activity pattern
+```{r, echo=TRUE}
+ggplot(data = step_interval, aes(x = step_interval$intervals, y = step_interval$step2))+
+    geom_line()+xlab("Interval") + ylab("Steps") + ggtitle("Daily activity pattern")
+```
+
+2. Find out the the interval contains the maximum number of steps
+```{r, echo=TRUE}
+which.max(step_interval$step2)
+```
+
+
+##Inputting missing values
+1. Calculate the total number of missing values
+```{r, echo=TRUE}
+sum(is.na(data$steps))
+```
+
+2. We will use the mean of the 5-minute interval to fill the missing values. First, let's make a function that will return the mean value for a particular interval.
+```{r, echo=TRUE}
+getMeanStepsPerInterval<-function(interval){
+    step_interval[step_interval$intervals==interval,]$steps
+}
+```
+
+3. Now, create a new dataset with the missing values filled with the mean of interval by using for loop. Let's call the new dataset "datafilled".
+```{r, warning=FALSE, echo=TRUE}
+datafilled <- data
+for(i in 1:nrow(datafilled)){
+    if(is.na(datafilled[i,]$steps)){
+        datafilled[i,]$steps <- getMeanStepsPerInterval(datafilled[i,]$interval)
+    }
+}
+
+```
+
+```{r, echo=TRUE}
+sum(is.na(datafilled$steps))
+```
+
+4. Make a histogram of the total number of steps taken each day
+```{r, echo=TRUE}
+totalstepday <- aggregate(steps ~ date, data=datafilled, sum)
+ggplot(data = totalstepday, aes(totalstepday$steps))+
+    geom_histogram(color = "black", fill = "grey", binwidth = 5000)+
+    xlab("steps") +ylab("frequency") +ggtitle("Total number of steps taken each day")
+```
+
+Report the mean and median total number of steps taken per day
+```{r, echo=TRUE}
+print(mean(totalstepday$steps))
+print(median(totalstepday$steps))
+```
+
+
+##Are there differences in activity patterns between weekdays and weekends?
+1. Create a new factor variable in the dataset with two levels – “weekday” and “weekend”
+```{r, echo=TRUE}
+class(datafilled$date)
+datafilled$date <- as.Date(strptime(datafilled$date, format="%Y-%m-%d"))
+class(datafilled$date)
+```
+
+Add a weekday column into the dataset
+```{r, echo=TRUE}
+datafilled$day <- weekdays(datafilled$date)
+str(datafilled)
+```
+
+Classify weekday/weekend
+```{r, echo=TRUE}
+for (i in 1:nrow(datafilled)) {
+    if (datafilled[i,]$day %in% c("Saturday","Sunday")) {
+        datafilled[i,]$day<-"weekend"
+    }
+    else{
+        datafilled[i,]$day<-"weekday"
+    }
+}
+```
+
+
+Seperate the dataset into weekdays/weekends dataset
+```{r, echo=TRUE}
+weekday <- filter(datafilled, datafilled$day == "weekday")
+weekdaystep <- aggregate(weekday$steps ~ weekday$interval + weekday$day, weekday, mean)
+names(weekdaystep) <- c("interval", "day", "step")
+
+weekend <- filter(datafilled, datafilled$day == "weekend")
+weekendstep <- aggregate(weekend$steps ~ weekend$interval + weekend$day, weekend, mean)
+names(weekendstep) <- c("interval", "day", "step")
+```
+
+
+2. Plot the activity pattern by weekdays/weekends
+```{r, echo=TRUE}
+ggplot(data = weekdaystep, aes(x = weekdaystep$interval, y = weekdaystep$step)) + 
+    geom_line() + xlab("interval") + ylab("steps") + ggtitle("Weekday activity pattern")
+
+
+ggplot(data = weekendstep, aes(x = weekendstep$interval, y = weekendstep$step)) + 
+    geom_line() + xlab("interval") + ylab("steps") + ggtitle("Weekend activity pattern")
+```
+
+
+The activity pattern of weekdays and weekends are different. 
+During weekdays, steps are taken more often before noon, while during weekends, steps are activly taken from the late morning to afternoon.
